@@ -20,17 +20,25 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v6
+
+      - name: Verify NEX BOX files
+        run: |
+          echo "Repository contents:"
+          ls -la
+          echo "Checking index.html..."
+          test -f index.html
+          echo "index.html FOUND"
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
-      - name: Upload site
+      - name: Upload NEX BOX
         uses: actions/upload-pages-artifact@v4
         with:
-          path: '.'
+          path: .
 
-      - name: Deploy to GitHub Pages
+      - name: Deploy NEX BOX
         id: deployment
         uses: actions/deploy-pages@v4

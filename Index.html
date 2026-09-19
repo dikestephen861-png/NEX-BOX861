@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0b0b0f">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+
+  <title>NEX BOX</title>
+
+  <link rel="manifest" href="manifest.json">
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: #09090c;
+      color: #fff;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .app {
+      max-width: 1100px;
+      margin: auto;
+      min-height: 100vh;
+      padding-bottom: 80px;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: rgba(9,9,12,.96);
+      border-bottom: 1px solid #24242b;
+      padding: 15px;
+    }
+
+    .top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo {
+      font-size: 25px;
+      font-weight: 900;
+      letter-spacing: 2px;
+    }
+
+    .logo span {
+      color: #e50914;
+    }
+
+    .admin {
+      color: #fff;
+      text-decoration: none;
+      background: #191920;
+      border: 1px solid #33333b;
+      border-radius: 8px;
+      padding: 8px 11px;
+      font-size: 12px;
+    }
+
+    .hero {
+      padding: 22px 15px 15px;
+    }
+
+    .hero h1 {
+      font-size: 28px;
+      margin-bottom: 7px;
+    }
+
+    .hero p {
+      color: #999;
+      font-size: 14px;
+    }
+
+    .search {
+      padding: 0 15px 18px;
+    }
+
+    .search input {
+      width: 100%;
+      padding: 13px 15px;
+      border-radius: 10px;
+      border: 1px solid #303038;
+      background: #15151b;
+      color: #fff;
+      outline: none;
+    }
+
+    .movies {
+      padding: 0 15px;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .movie {
+      background: #15151b;
+      border: 1px solid #25252d;
+      border-radius: 10px;
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    .poster {
+      width: 100%;
+      aspect-ratio: 2 / 3;
+      object-fit: cover;
+      background: #202027;
+      display: block;
+    }
+
+    .movie-info {
+      padding: 10px;
+    }
+
+    .movie-title {
+      font-weight: 800;
+      font-size: 14px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .movie-meta {
+      color: #888;
+      font-size: 11px;
+      margin-top: 5px;
+    }
+
+    .empty {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 60px 20px;
+      color: #777;
+    }
+
+    .bottom {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 64px;
+      background: rgba(15,15,20,.97);
+      border-top: 1px solid #282830;
+      display: flex;
+      justify-content: center;
+      z-index: 20;
+    }
+
+    .bottom-inner {
+      width: 100%;
+      max-width: 700px;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+    }
+
+    .nav {
+      background: none;
+      border: 0;
+      color: #888;
+      font-size: 11px;
+      cursor: pointer;
+    }
+
+    .nav.active {
+      color: #fff;
+    }
+
+    @media (min-width: 650px) {
+      .movies {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="app">
+
+  <header>
+    <div class="top">
+      <div class="logo">NEX <span>BOX</span></div>
+      <a class="admin" href="admin.html">ADMIN</a>
+    </div>
+  </header>
+
+  <section class="hero">
+    <h1>Watch Movies</h1>
+    <p>Your NEX BOX movie library</p>
+  </section>
+
+  <section class="search">
+    <input
+      id="search"
+      type="search"
+      placeholder="Search movies..."
+      oninput="searchMovies()"
+    >
+  </section>
+
+  <main
+    class="movies"
+    id="movieGrid"
+  >
+    <div class="empty">
+      Loading movies...
+    </div>
+  </main>
+
+</div>
+
+<nav class="bottom">
+  <div class="bottom-inner">
+
+    <button class="nav active">
+      Home
+    </button>
+
+    <button class="nav">
+      Movies
+    </button>
+
+    <button class="nav">
+      My List
+    </button>
+
+    <button class="nav">
+      Downloads
+    </button>
+
+  </div>
+</nav>
+
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+
+const SUPABASE_URL =
+  "https://jacxlmcwwedertcaizdj.supabase.co";
+
+const SUPABASE_KEY =
+  "sb_publishable_LZQ6oY0ReQ5uerLsHOtYIQ_llOyeB94";
+
+const supabaseClient =
+  window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+  );
+
+let movies = [];
+
+
+async function loadMovies() {
+
+  const grid =
+    document.getElementById("movieGrid");
+
+  grid.innerHTML =
+    '<div class="empty">Loading movies...</div>';
+
+  const {
+    data,
+    error
+  } =
+    await supabaseClient
+      .from("movies")
+      .select("*")
+      .order(
+        "created_at",
+        {
+          ascending: false
+        }
+      );
+
+  if (error) {
+
+    console.error(error);
+
+    grid.innerHTML =
+      '<div class="empty">Unable to load movies.</div>';
+
+    return;
+  }
+
+  movies = data || [];
+
+  renderMovies(movies);
+
+}
+
+
+function renderMovies(list) {
+
+  const grid =
+    document.getElementById("movieGrid");
+
+  grid.innerHTML = "";
+
+  if (!list.length) {
+
+    grid.innerHTML =
+      '<div class="empty">No movies available yet.</div>';
+
+    return;
+  }
+
+  list.forEach(movie => {
+
+    const card =
+      document.createElement("div");
+
+    card.className =
+      "movie";
+
+    card.onclick =
+      () => openMovie(movie);
+
+
+    const poster =
+      document.createElement("img");
+
+    poster.className =
+      "poster";
+
+    poster.src =
+      movie.poster_url ||
+      "";
+
+    poster.alt =
+      movie.title || "Movie";
+
+
+    const info =
+      document.createElement("div");
+
+    info.className =
+      "movie-info";
+
+
+    const title =
+      document.createElement("div");
+
+    title.className =
+      "movie-title";
+
+    title.textContent =
+      movie.title || "Untitled";
+
+
+    const meta =
+      document.createElement("div");
+
+    meta.className =
+      "movie-meta";
+
+    meta.textContent =
+      [
+        movie.genre,
+        movie.year
+      ]
+      .filter(Boolean)
+      .join(" • ");
+
+
+    info.appendChild(title);
+
+    info.appendChild(meta);
+
+    card.appendChild(poster);
+
+    card.appendChild(info);
+
+    grid.appendChild(card);
+
+  });
+
+}
+
+
+function searchMovies() {
+
+  const value =
+    document
+      .getElementById("search")
+      .value
+      .toLowerCase()
+      .trim();
+
+  const filtered =
+    movies.filter(movie =>
+      (movie.title || "")
+        .toLowerCase()
+        .includes(value)
+    );
+
+  renderMovies(filtered);
+
+}
+
+
+function openMovie(movie) {
+
+  if (!movie.video_url) {
+
+    alert(
+      "This movie does not have a video yet."
+    );
+
+    return;
+  }
+
+  const encoded =
+    encodeURIComponent(
+      JSON.stringify(movie)
+    );
+
+  window.location.href =
+    "watch.html?movie=" + encoded;
+
+}
+
+
+loadMovies();
+
+</script>
+
+</body>
+</html>

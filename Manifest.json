@@ -1,0 +1,11 @@
+{
+  "name": "NEX BOX",
+  "short_name": "NEX BOX",
+  "description": "NEX BOX movie platform",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#09090c",
+  "theme_color": "#09090c",
+  "orientation": "portrait",
+  "icons": []
+}
